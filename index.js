@@ -6,9 +6,9 @@ const port = 5000
 var mysql = require('mysql')
 
 app.use(bodyParser.json())
-app.use(bodyParser.urlencoded({extended:false}))
-app.use((req,res,next)=>{
-  res.setHeader("Access-Control-Allow-Origin","*");
+app.use(bodyParser.urlencoded({ extended: false }))
+app.use((req, res, next) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader(
     "Access-Control-Allow-Headers",
     "Origin, X-Requested-With, Content-Type, Accept, Authorization"
@@ -26,61 +26,80 @@ var con = mysql.createConnection({
   user: "webapp",
   password: "secret2024",
   port: "3307",
-  database:"shop"
+  database: "shop"
 });
 
-con.connect(function(err){
-  if(err) throw err;
+con.connect(function (err) {
+  if (err) throw err;
 });
 
 app.use(express.json())
 app.get('/', (req, res) => {
-    res.send('Hello World!')
+  res.send('Hello World!')
 });
 
-app.get('/api/products',function(req,res){
-  con.query("SELECT * FROM products",function (err,result,fields){
+app.get('/api/products', function (req, res) {
+  con.query("SELECT * FROM products", function (err, result, fields) {
     if (err) throw res.status(400).send('Not found any products');
     console.log(result);
     res.send(result);
   });
 });
-app.get('/api/products/:id',function(req,res){
-  const id = req.params.id;
-  con.query("SELECT *FROM products where id="+id, function(err,result,fields){
+app.delete('/api/delproduct/:id', (req, res) => {
+  const id = res.params.id;
+  con.query('DELETE FROM products where id=${id}' + id, function (err, result, fields) {
     if (err) throw err;
-    let products =result;
-    if(products.length>0){
+    con.query("SELECT * FROM products", function (err, result, fields) {
+      if (err) throw res.status(400).send('Not found any products');
+      console.log(result);
+      res.send({products:result,status:"ok"});
+    });
+  });
+})
+app.get('/api/products/:id', function (req, res) {
+  const id = req.params.id;
+  con.query("SELECT *FROM products where id=" + id, function (err, result, fields) {
+    if (err) throw err;
+    let products = result;
+    if (products.length > 0) {
       res.send(products);
     }
-    else{
-      res.status(400).send('Not found products for'+id);
+    else {
+      res.status(400).send('Not found products for' + id);
     }
     console.log(result);
   });
 
 });
-// const products=[
-//   {id:0,name:"Notebook Acer Swift",price:45900,img:"https://img.advice.co.th/images_nas/pic_product4/A0147295/A0147295_s.jpg"},
-//   {id:1,name:"Notebook Asus Vivo",price:19900,img:"https://img.advice.co.th/images_nas/pic_product4/A0146010/A0146010_s.jpg"},
-//   {id:2,name:"Notebook Lenovo Ideapad",price:32900,img:"https://img.advice.co.th/images_nas/pic_product4/A0149009/A0149009_s.jpg"},
-//   {id:3,name:"Notebook MSI Prestige",price:54900,img:"https://img.advice.co.th/images_nas/pic_product4/A0149954/A0149954_s.jpg"},
-//   {id:4,name:"Notebook DELL XPS",price:99900,img:"https://img.advice.co.th/images_nas/pic_product4/A0146335/A0146335_s.jpg"},
-//   {id:5,name:"Notebook HP Envy",price:46900,img:"https://img.advice.co.th/images_nas/pic_product4/A0145712/A0145712_s.jpg"}];
-
-//   app.get('/', (req, res) => {
-//   res.send('Hello World!')
-// })
-
-
-// app.get('/api/products',function(req,res){
-//   if(products.length>0)
-//     res.send(products);
-  
-//   else
-//     res.status(400).send('Not  product founds')
-  
+// app.put('/api/updateProducts/:id', (req, res) => {
+//   const id = req.params.id;
+//   const name = req.body.name;
+//   const price = req.body.price;
+//   console.log("data from frontend", id, name, price);
+ 
+//   var sql = 'UPDATE products SET name = ?, price = ? WHERE id = ?';
+//   con.query(sql, [name, price, id], (err, results) => {
+//       if (err) {
+//           return res.status(400).send('Error: Cannot update product');
+//       }
+ 
+//       var get = 'SELECT * FROM products';
+//       con.query(get, (err, result) => {
+//           if (err) {
+//               return res.status(400).send("Error: Cannot get data");
+//           }
+//           console.log(result);
+//           res.send(result);
+//       });
+//   });
 // });
+
+app.post('/api/addproduct', (req, res) => {
+  const name = req.body.name;
+  const price = req.body.price;
+  const img = req.body.img;
+  console.log(name, price, img)
+})
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`)
 })
